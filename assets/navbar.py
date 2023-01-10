@@ -16,8 +16,8 @@ def create_navbar():
                 ],
             ),
         ],
-        brand="home", # set the left side text of navbar
-        brand_href="/",
+        brand="UniPlotter", # set the left side text of navbar
+        brand_href="/home",
         sticky="top",
         color='dark',
         dark=True,

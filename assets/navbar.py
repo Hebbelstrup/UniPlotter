@@ -9,9 +9,8 @@ def create_navbar():
                 in_navbar=True,
                 label="Menu",
                 children=[
-                    dbc.DropdownMenuItem("home", href='/home'),
-                    dbc.DropdownMenuItem('analystics', href='/analytics'),
                     dbc.DropdownMenuItem('CD', href='/cd'),
+                    dbc.DropdownMenuItem('ÄKTA', href='/akta'),
                     dbc.DropdownMenuItem('Files', href='/files')
                 ],
             ),

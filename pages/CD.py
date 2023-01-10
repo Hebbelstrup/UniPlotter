@@ -20,7 +20,7 @@ def parse_contents(contents, filename):
     decoded = base64.b64decode(content_string)
     file = io.StringIO(decoded.decode('utf-8'))
 
-    data = pd.read_csv(file, sep="\n|\\t", names=['λ', 'Elip', 'Sat'], decimal=',', engine='python')
+    data = pd.read_csv(file, sep="\n|\\t", names=['λ', 'Elip', 'Sat'], decimal=',', engine="python")
     df = pd.DataFrame(data)
     df = df[20:df.loc[df['λ'].str.startswith('#####')].index[0]].astype('float')
     df = df.loc[(df['Sat'] <= 700)]

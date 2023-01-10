@@ -11,7 +11,8 @@ def create_navbar():
                 children=[
                     dbc.DropdownMenuItem("home", href='/home'),
                     dbc.DropdownMenuItem('analystics', href='/analytics'),
-                    dbc.DropdownMenuItem('CD', href='/cd')
+                    dbc.DropdownMenuItem('CD', href='/cd'),
+                    dbc.DropdownMenuItem('Files', href='/files')
                 ],
             ),
         ],

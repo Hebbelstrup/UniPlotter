@@ -31,8 +31,22 @@ def plot_data():
         if name not in ['Fraction','Logbook','Injection','mAU']:
             fig.add_trace(go.Scatter(x=x, y=y, name=name), secondary_y=True)
         if name == 'Fraction':
-            for i in x.dropna():
-                fig.add_trace(go.Scatter(x=[i,i],y=[0,100],mode='lines'))
+            fig.add_trace(go.Scatter(x=[0, 0], y=[0, 0], mode='lines',
+                                     legendgroup='Fractions', name='fractions'))
+            for k,i in enumerate(x.dropna()):
+                fig.add_trace(go.Scatter(x=[i,i],y=[df['mAU'].min(),df['mAU'].max()/15],
+                                         mode='lines',
+                                         legendgroup='Fractions',name='fractions',showlegend=False,
+                                         opacity=0.5,line=dict(color='black')))
+
+                fig.add_trace(go.Scatter(x=[i], y=[df['mAU'].max()/15],mode='text',text=k,
+                                        textposition="top center",showlegend=False))
+                                                                    # adds numbers to fraction lines.
+                                                                    # Needs to be done like this because
+                                                                    # of the x=[i,i] adds to points
+                                                                    # so numbering will be dublicated
+
+
         else:
             pass
 

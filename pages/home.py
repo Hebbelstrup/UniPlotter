@@ -8,7 +8,7 @@ layout = html.Div(children=[
             style={'textAlign':'center'}),
 
     html.Div(children='''
-        A Dashboard which includes all the scripts i written and used during my time in SBiNLab
+        A dashboard which includes all the scripts i written and used during my time in SBiNLab
     ''',style={'textAlign':'center'}),
 
     html.Div(children='''

@@ -32,6 +32,9 @@ def parse_content(contents):
     return df
 
 layout = html.Div(id='parent', children=[
+            html.Div(children=
+                ['A plotter for data from Äkta systems',html.Br(), 'Uploading more than one file will only overlay 280 nm']
+                              ,style={'textAlign':'center'}),
             dcc.Upload(id='upload-data', children=html.Div([html.A("Select File(s)")]),
                        style={
                            "width": "305px",
@@ -43,7 +46,8 @@ layout = html.Div(id='parent', children=[
                            "textAlign": "center",
                            # "margin": "5px",
                        },
-                       multiple=True,),
+                       multiple=True,
+                       className="d-grid gap-2 col-6 mx-auto"),
             dcc.Graph(id='akta_plot'),
             html.H1(id='output-data-upload'),
             html.P(id='placeholder'),
@@ -75,17 +79,17 @@ def plot_data(contents):
             if name =='mAU':
                 fig.add_trace(go.Scatter(x=x,y=y,name=name),secondary_y=False)
             if name not in ['Fraction','Logbook','Injection','mAU']:
-                fig.add_trace(go.Scatter(x=x, y=y, name=name), secondary_y=True)
+                fig.add_trace(go.Scatter(x=x, y=y, name=name,visible='legendonly'), secondary_y=True)
             if name == 'Fraction':
                 fig.add_trace(go.Scatter(x=[0, 0], y=[0, 0], mode='lines',
-                                         legendgroup='Fractions', name='fractions'))
+                                         legendgroup='Fractions', name='fractions',visible='legendonly'))
                 for k,i in enumerate(x.dropna()):
                     fig.add_trace(go.Scatter(x=[i,i],y=[df['mAU'].min(),df['mAU'].max()/15],
                                              mode='lines',
                                              legendgroup='Fractions',name='fractions',showlegend=False,
-                                             opacity=0.5,line=dict(color='black')))
+                                             opacity=0.5,line=dict(color='black'),visible='legendonly'))
                     fig.add_trace(go.Scatter(x=[i], y=[df['mAU'].max()/15],mode='text',text=k,
-                                            textposition="top center",showlegend=False,legendgroup='Fractions'))
+                                            textposition="top center",showlegend=False,legendgroup='Fractions',visible='legendonly'))
                                                                     # adds numbers to fraction lines.
                                                                     # Needs to be done like this because
                                                                     # of the x=[i,i] adds to points

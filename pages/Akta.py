@@ -63,8 +63,8 @@ layout = html.Div(id='parent', children=[
 
 @callback(Output('akta_plot','figure'),
           Output('output-data-upload','children'),
-          [Input('upload-data','contents')],
-            prevent_initial_call=True)
+          [Input('upload-data','contents')],config_prevent_initial_callbacks=True)
+
 
 def plot_data(contents):
 
@@ -88,14 +88,20 @@ def plot_data(contents):
                                              mode='lines',
                                              legendgroup='Fractions',name='fractions',showlegend=False,
                                              opacity=0.5,line=dict(color='black'),visible='legendonly'))
-                    fig.add_trace(go.Scatter(x=[i], y=[df['mAU'].max()/15],mode='text',text=k,
+                    fig.add_trace(go.Scatter(x=[i], y=[df['mAU'].max()/15],mode='text',text=k+1,
                                             textposition="top center",showlegend=False,legendgroup='Fractions',visible='legendonly'))
                                                                     # adds numbers to fraction lines.
                                                                     # Needs to be done like this because
                                                                     # of the x=[i,i] adds to points
-        return fig, None                                            # so numbering will be dublicates
+                                                                    # so numbering will be dublicates
+        fig['layout']['xaxis']['title'] = 'ml'
+        fig['layout']['yaxis1']['title'] = '280 nm'
+        return fig, None
 
     else:
-        pass
+        for data in contents:
+            df = parse_content(data)
+            fig.add_trace(go.Scatter(x=df['ml'],y=df['mAU'],name='test'))
+        return fig,None
 
 

@@ -66,34 +66,32 @@ def plot_data(contents):
 
 
     df = parse_content(contents)
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    if len(df) == 1:
-            fig = make_subplots(specs=[[{"secondary_y": True}]])
+    if len(contents) == 1:
 
-            for i in df.columns[1::2]:
-                x,y,name = get_xy(i,df)
-                if name =='mAU':
-                    fig.add_trace(go.Scatter(x=x,y=y,name=name),secondary_y=False)
-                if name not in ['Fraction','Logbook','Injection','mAU']:
-                    fig.add_trace(go.Scatter(x=x, y=y, name=name), secondary_y=True)
-                if name == 'Fraction':
-                    fig.add_trace(go.Scatter(x=[0, 0], y=[0, 0], mode='lines',
-                                             legendgroup='Fractions', name='fractions'))
-                    for k,i in enumerate(x.dropna()):
-                        fig.add_trace(go.Scatter(x=[i,i],y=[df['mAU'].min(),df['mAU'].max()/15],
-                                                 mode='lines',
-                                                 legendgroup='Fractions',name='fractions',showlegend=False,
-                                                 opacity=0.5,line=dict(color='black')))
-
-                        fig.add_trace(go.Scatter(x=[i], y=[df['mAU'].max()/15],mode='text',text=k,
-                                                textposition="top center",showlegend=False,legendgroup='Fractions'))
+        for i in df.columns[1::2]:
+            x,y,name = get_xy(i,df)
+            if name =='mAU':
+                fig.add_trace(go.Scatter(x=x,y=y,name=name),secondary_y=False)
+            if name not in ['Fraction','Logbook','Injection','mAU']:
+                fig.add_trace(go.Scatter(x=x, y=y, name=name), secondary_y=True)
+            if name == 'Fraction':
+                fig.add_trace(go.Scatter(x=[0, 0], y=[0, 0], mode='lines',
+                                         legendgroup='Fractions', name='fractions'))
+                for k,i in enumerate(x.dropna()):
+                    fig.add_trace(go.Scatter(x=[i,i],y=[df['mAU'].min(),df['mAU'].max()/15],
+                                             mode='lines',
+                                             legendgroup='Fractions',name='fractions',showlegend=False,
+                                             opacity=0.5,line=dict(color='black')))
+                    fig.add_trace(go.Scatter(x=[i], y=[df['mAU'].max()/15],mode='text',text=k,
+                                            textposition="top center",showlegend=False,legendgroup='Fractions'))
                                                                     # adds numbers to fraction lines.
                                                                     # Needs to be done like this because
                                                                     # of the x=[i,i] adds to points
-                                                                    # so numbering will be dublicates
-            else:
-                pass
+        return fig, None                                            # so numbering will be dublicates
 
     else:
         pass
-    return fig,None
+
+

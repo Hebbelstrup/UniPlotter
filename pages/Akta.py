@@ -74,8 +74,8 @@ def plot_data(contents,filename):
     if len(contents) == 1:
         for data in contents:
             df = parse_content(data)
-        for i in df.columns[1::2]:
-            x,y,name = get_xy(i,df)
+        for i in df.columns[1::2]: # everyother coumn is the "event". The column before is the mL of that event.
+            x,y,name = get_xy(i,df) # this returns the ml and the event in a data frame.
             if name =='mAU':
                 fig.add_trace(go.Scatter(x=x,y=y,name=name),secondary_y=False)
             if name not in ['Fraction','Logbook','Injection','mAU']:

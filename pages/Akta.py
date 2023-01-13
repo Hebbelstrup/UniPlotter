@@ -32,9 +32,10 @@ def parse_content(contents):
     return df
 
 layout = html.Div(id='parent', children=[
+            html.H1(id='H1', children='Äkta Plotter', style={'textAlign': 'center', 'marginTop': 40, 'marginBottom': 40}),
             html.Div(children=
                 ['A plotter for data from Äkta systems',html.Br(), 'Uploading more than one file will only overlay 280 nm']
-                              ,style={'textAlign':'center'}),
+                              ,style={'textAlign':'center','marginBottom':20}),
             dcc.Upload(id='upload-data', children=html.Div([html.A("Select File(s)")]),
                        style={
                            "width": "305px",

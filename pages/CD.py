@@ -34,8 +34,11 @@ def Denature(x, An, Bn, Ad, Bd, dS, dH):  # Function to be fitted to data
 
 
 layout = html.Div(id='parent', children=[
-    html.H1(id='H1', children='CD Plotter', style={'textAlign': 'center', 'marginTop': 40, 'marginBottom': 40}), \
- \
+    html.H1(id='H1', children='CD Plotter', style={'textAlign': 'center', 'marginTop': 40, 'marginBottom': 40}),
+    html.Div(children=
+                ['A plotter for data from JASCO CD systems',html.Br(), 'Uploading more than one file will overlay them ',html.Br(),
+                 'Uploading file containing temperature data will allow for fitting of denaturation']
+                              ,style={'textAlign':'center','marginBottom':20}),
     dcc.Upload(id="upload-data", children=html.Div([html.A("Select File(s)")]),
                style={
                    "width": "305px",
@@ -47,10 +50,11 @@ layout = html.Div(id='parent', children=[
                    "textAlign": "center",
                    # "margin": "5px",
                },
-               multiple=True, ),
-    dcc.Input(id='Concentration', value=None, type='number', placeholder='Concentration in µM'),
-    dcc.Input(id='Peptide-bonds', value=None, type='number', placeholder='Peptide bonds'),
-    dcc.Checklist(id='Converter', options=[{'label': 'Convert to MRE', 'value': 'Convert'}],
+               multiple=True,
+               className="d-grid gap-2 col-6 mx-auto"),
+    dcc.Input(id='Concentration', value=None, type='number', placeholder='Concentration in µM',className="d-grid gap-2 col-2 mx-auto"),
+    dcc.Input(id='Peptide-bonds', value=None, type='number', placeholder='Peptide bonds',className="d-grid gap-2 col-2 mx-auto"),
+    dcc.Checklist(id='Converter', options=[{'label': 'Convert to MRE', 'value': 'Convert'}],className="d-grid gap-2 col-2 mx-auto",
                   style={'display': 'inline-block'}),
     dcc.Checklist(id="checklist", inline=True),
 

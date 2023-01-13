@@ -19,15 +19,15 @@ def get_xy(name,df):
     return x,y,name
 
 def parse_content(contents):
-    for data in contents:
 
-        content_type, content_string = data.split(',')
 
-        decoded = base64.b64decode(content_string)
-        file = io.StringIO(decoded.decode('utf-8'))
+    content_type, content_string = contents.split(',')
 
-        df = pd.read_csv(file, sep="\n|\\t", decimal=".", header=2, engine='python')
-        df = pd.DataFrame(df)
+    decoded = base64.b64decode(content_string)
+    file = io.StringIO(decoded.decode('utf-8'))
+
+    df = pd.read_csv(file, sep="\n|\\t", decimal=".", header=2, engine='python')
+    df = pd.DataFrame(df)
 
     return df
 
@@ -63,17 +63,17 @@ layout = html.Div(id='parent', children=[
 
 @callback(Output('akta_plot','figure'),
           Output('output-data-upload','children'),
-          [Input('upload-data','contents')],config_prevent_initial_callbacks=True)
+          [Input('upload-data','contents'),
+           State('upload-data','filename')],config_prevent_initial_callbacks=True)
 
 
-def plot_data(contents):
+def plot_data(contents,filename):
 
-
-    df = parse_content(contents)
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
     if len(contents) == 1:
-
+        for data in contents:
+            df = parse_content(data)
         for i in df.columns[1::2]:
             x,y,name = get_xy(i,df)
             if name =='mAU':
@@ -99,9 +99,13 @@ def plot_data(contents):
         return fig, None
 
     else:
-        for data in contents:
+        for data,filename in zip(contents,filename):
             df = parse_content(data)
-            fig.add_trace(go.Scatter(x=df['ml'],y=df['mAU'],name='test'))
+
+            fig.add_trace(go.Scatter(x=df['ml'],y=df['mAU'],name=filename))
+
+        fig['layout']['xaxis']['title'] = 'ml'
+        fig['layout']['yaxis1']['title'] = '280 nm'
         return fig,None
 
 

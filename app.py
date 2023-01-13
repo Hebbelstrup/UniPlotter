@@ -6,6 +6,7 @@ app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.LUX])
 
 
 nav = create_navbar()
+server = app.server
 
 app.layout = html.Div([
     html.Div([nav]),

@@ -7,6 +7,23 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
+
+def parse_content(contents): # Takes in one element from "upload-Data","contents" and returns a dataframe for that file
+
+
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    file = io.StringIO(decoded.decode('utf-8'))
+
+    df = pd.read_csv(file, sep="\n|\\t", decimal='.', names=["nM","I"], engine='python', header=None)
+    df = pd.DataFrame(df)
+    data_start = float(df.loc[df['nM'].str.startswith('#DATA')].index[0] + 1)
+    data = df[int(data_start):]
+    data['nM'] = data['nM'].astype(float)
+
+    return data
+
 dash.register_page(__name__, title='fluorescence')
 
 layout = html.Div(id='parent', children=[
@@ -32,30 +49,16 @@ layout = html.Div(id='parent', children=[
 
 ])
 
-
-def parse_content(contents): # Takes in one element from "upload-Data","contents" and returns a dataframe for that file
-
-
-    content_type, content_string = contents.split(',')
-
-    decoded = base64.b64decode(content_string)
-    file = io.StringIO(decoded.decode('utf-8'))
-
-    df = pd.read_csv(file, sep="\n|\\t", decimal='.', names=["nM","I"], engine='python', header=None)
-    df = pd.DataFrame(df)
-    data_start = float(df.loc[df['nM'].str.startswith('#DATA')].index[0] + 1)
-    data = df[int(data_start):]
-    data['nM'] = data['nM'].astype(float)
-
-    return data
-
 @callback(Output('Fluorescence_plot','figure'),
-          [Input('upload-data','contents')],config_prevent_initial_callbacks=True)
+          [Input('upload-data', 'contents'),
+           State('upload-data', 'filename')], config_prevent_initial_callbacks=True)
 
-def show(content):
+def plot_fluorescence(content,filename):
     data = [parse_content(i) for i in content]
-    fig = make_subplots(rows=2, cols=1, row_heights=[0.8,0.2])
+    fig = make_subplots(rows=1, cols=1)
 
-    fig.add_trace(go.Scatter(x=data[0]['nM'],y=data[0]['I']),row=1,col=1)
+    for i in range(0,len(data)):
+        fig.add_trace(go.Scatter(x=data[i]['nM'],y=data[i]['I'],name=filename[i]),row=1,col=1)
 
     return fig
+

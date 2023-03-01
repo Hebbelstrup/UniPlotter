@@ -54,16 +54,46 @@ layout = html.Div(id='parent', children=[
                                    }),
 
 
+
                        dbc.Tabs([]
                            ,id="fluoro_tabs",
                            active_tab='normal',
-                           className="mx-auto",
+                           style={'display':'none'},
                        ),
 
                        dcc.Graph(id='Fluorescence_plot'),
                        html.P(id='Fluorescence_placeholder'),
+                       dbc.Modal(
+                           [
+                               dbc.ModalHeader(dbc.ModalTitle("Header")),
+                               dbc.ModalBody(children="This is the content of the modal",id='modalbody'),
+                               dbc.ModalFooter(
+                                   dbc.Button(
+                                       "Close", id="close", className="ms-auto", n_clicks=0
+                                   )
+                               ),
+                           ],
+                           id="modal",
+                           is_open=False,
+                       ),
 
 ])
+
+@callback(Output('modalbody','children'),Input('upload-data', 'contents'),config_prevent_initial_callbacks=True)
+def update_modal_with_files(content):
+   # data = [parse_content(i) for i in content]
+
+    return 'testing'
+
+@callback(Output('modal','is_open'),Output('close','n_clicks'),
+          [Input('fluoro_concentrations','n_clicks'),Input('close','n_clicks')])
+
+def open_modal(n_click,close_click):
+
+    if n_click >= 1 and close_click == 0:
+        return True,0
+    else:
+        return False,0
 
 
 @callback(Output('fluoro_concentrations','style'), # Input is whenever files are uploaded. Output is style and className for the button
@@ -80,14 +110,16 @@ def update_button(data): # Returns style and position for button if more than 1 
             return {'display':'none'},None
 
 @callback(Output('fluoro_tabs','children'),
+          Output('fluoro_tabs','style'),
+          Output('fluoro_tabs','className'),
             Input('upload-data', 'contents'),config_prevent_initial_callbacks=True)
 
-def update_tab(upload):
+def update_tab(event):
     return [
                                dbc.Tab(label='Normal',tab_id='normal'),
                                dbc.Tab(label='Wavelength',tab_id='wavelength'),
                                dbc.Tab(label='Intensity',tab_id='intensity')
-           ]
+           ], None ,'mx-auto'
 
 @callback(Output('Fluorescence_plot','figure'),
           [Input('upload-data', 'contents'),

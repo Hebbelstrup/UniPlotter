@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import dash_bootstrap_components as dbc
 import numpy as np
+from dash.dependencies import ALL
 
 
 
@@ -65,35 +66,62 @@ layout = html.Div(id='parent', children=[
                        html.P(id='Fluorescence_placeholder'),
                        dbc.Modal(
                            [
-                               dbc.ModalHeader(dbc.ModalTitle("Header")),
-                               dbc.ModalBody(children="This is the content of the modal",id='modalbody'),
+                               dbc.ModalHeader(dbc.ModalTitle("Concentrations"),className="mx-auto"),
+                               dbc.ModalBody(children="No files uploaded?",id='modalbody'),
                                dbc.ModalFooter(
                                    dbc.Button(
-                                       "Close", id="close", className="ms-auto", n_clicks=0
+                                       "Close & save", id="close", className="mx-auto", n_clicks=0
                                    )
                                ),
                            ],
                            id="modal",
                            is_open=False,
                        ),
+                       dcc.Store(id='concentrations_store'),
 
 ])
 
-@callback(Output('modalbody','children'),Input('upload-data', 'contents'),config_prevent_initial_callbacks=True)
-def update_modal_with_files(content):
-   # data = [parse_content(i) for i in content]
+@callback(Output('modalbody','children'), # Only updates when new files are upoaded. Not when button is clicked. Very usefull for the storage of Inputs
+          [Input('upload-data', 'contents'),Input('upload-data', 'filename')],config_prevent_initial_callbacks=True)
 
-    return 'testing'
+def update_modal_with_files(content,filename): # Renders the layout for the modal.
 
-@callback(Output('modal','is_open'),Output('close','n_clicks'),
-          [Input('fluoro_concentrations','n_clicks'),Input('close','n_clicks')])
+    names = [html.H4(i[:-4],id=f'{i}_name', style={'display':'inline-block','margin-left':30,'margin-right':30}) for i in filename]
+    input = [dcc.Input(id={'type':'component','index':i}, type='number',placeholder='test',style={'display':'inline-block', 'border': '1px solid black'}) for i in filename]
+    together = []
+    for i in range(0,len(names)): # Has to be done this way to such that its just one large list. Lists of list !does not work!
+            together.append(names[i])
+            together.append(input[i])
 
-def open_modal(n_click,close_click):
+    return html.Div(together)
 
-    if n_click >= 1 and close_click == 0:
-        return True,0
-    else:
-        return False,0
+@callback(Output('modal','is_open'),Output("close",'n_clicks'),Output('Fluorescence_placeholder','children'),
+          [Input('fluoro_concentrations','n_clicks'),Input("close",'n_clicks')],State({'type':'component','index':ALL},'value'),config_prevent_initial_call=True)
+
+def create_concentrations(open_clicks,close_clicks,concentrations):
+
+    if open_clicks >= 1 and close_clicks == 0:
+        return True,0,concentrations
+
+    else: # Can only happen when close_clicks >= 1. gets set to zero in both open and close.
+        return False,0,concentrations
+
+
+
+
+
+
+
+
+#@callback(Output('modal','is_open'),
+#          [Input('fluoro_concentrations','n_clicks'),Input('close','n_clicks')])
+
+#def open_modal(n_click,close_click):
+
+#    if n_click >= 1 and close_click == 0:
+#        return True
+#    else:
+#        return False
 
 
 @callback(Output('fluoro_concentrations','style'), # Input is whenever files are uploaded. Output is style and className for the button

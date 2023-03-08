@@ -95,34 +95,20 @@ def update_modal_with_files(content,filename): # Renders the layout for the moda
 
     return html.Div(together)
 
-@callback(Output('modal','is_open'),Output("close",'n_clicks'),Output('Fluorescence_placeholder','children'),
+@callback(Output('modal','is_open'),Output("close",'n_clicks'),Output('concentrations_store','data'),
           [Input('fluoro_concentrations','n_clicks'),Input("close",'n_clicks')],State({'type':'component','index':ALL},'value'),config_prevent_initial_call=True)
+# This call back takes outputs the concentrations that is inputtet, and saves it in concentrations_store, as a list. The order of the concentrations follow the order of filenames. ie. zip(concentrations_store,filename)
+# gives correct concentrations for each files
+
 
 def create_concentrations(open_clicks,close_clicks,concentrations):
+
 
     if open_clicks >= 1 and close_clicks == 0:
         return True,0,concentrations
 
     else: # Can only happen when close_clicks >= 1. gets set to zero in both open and close.
         return False,0,concentrations
-
-
-
-
-
-
-
-
-#@callback(Output('modal','is_open'),
-#          [Input('fluoro_concentrations','n_clicks'),Input('close','n_clicks')])
-
-#def open_modal(n_click,close_click):
-
-#    if n_click >= 1 and close_click == 0:
-#        return True
-#    else:
-#        return False
-
 
 @callback(Output('fluoro_concentrations','style'), # Input is whenever files are uploaded. Output is style and className for the button
           Output('fluoro_concentrations','className'),

@@ -1,14 +1,14 @@
 import base64
 import io
 import dash
-from dash import html, dcc, callback, Input, Output, dash_table,State
+from dash import html, dcc, callback, Input, Output, dash_table,State,ctx
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import dash_bootstrap_components as dbc
 import numpy as np
 from dash.dependencies import ALL
-
+from dash.exceptions import PreventUpdate
 
 
 def parse_content(contents): # Takes in one element from "upload-Data","contents" and returns a dataframe for that file
@@ -96,14 +96,12 @@ def update_modal_with_files(content,filename): # Renders the layout for the moda
     return html.Div(together)
 
 @callback(Output('modal','is_open'),Output("close",'n_clicks'),Output('concentrations_store','data'),
-          [Input('fluoro_concentrations','n_clicks'),Input("close",'n_clicks')],State({'type':'component','index':ALL},'value'),config_prevent_initial_call=True)
+          [Input('fluoro_concentrations','n_clicks'),Input("close",'n_clicks'),State({'type':'component','index':ALL},'value')],config_prevent_initial_callbacks=True)
 # This call back takes outputs the concentrations that is inputtet, and saves it in concentrations_store, as a list. The order of the concentrations follow the order of filenames. ie. zip(concentrations_store,filename)
 # gives correct concentrations for each files
 
 
 def create_concentrations(open_clicks,close_clicks,concentrations):
-
-
     if open_clicks >= 1 and close_clicks == 0:
         return True,0,concentrations
 
@@ -138,36 +136,57 @@ def update_tab(event):
 @callback(Output('Fluorescence_plot','figure'),
           [Input('upload-data', 'contents'),
            Input('fluoro_tabs','active_tab'),
+           Input('concentrations_store','data'),
            State('upload-data', 'filename')], config_prevent_initial_callbacks=True)
 
-def plot_fluorescence(content,active_tab,filename):
-
+def plot_fluorescence(content,active_tab,concentrations,filename):
 
     data = [parse_content(i) for i in content]
-
     fig = make_subplots(rows=1, cols=1)
 
-    if active_tab == 'normal':
+    if active_tab == 'normal' and concentrations:
+        for i in range(0,len(data)):
+            fig.add_trace(go.Scatter(x=data[i]['nM'],y=data[i]['I'],name=concentrations[i]),row=1,col=1)
+
+    if active_tab == 'normal' and not concentrations:
         for i in range(0,len(data)):
             fig.add_trace(go.Scatter(x=data[i]['nM'],y=data[i]['I'],name=filename[i]),row=1,col=1)
-
-
 
 
     ### WAVELENGTH PLOTTER. CURRENTLY TAKES THE NM WITH MAX INT FOR FILE 0 AND PLOTS FOR ALL
     ### STILL NEEDS ABILITY TO DECIDE WAVELENGTH & SHOULD TAKE IN LIST OF DENATURANT VALUES
 
     if active_tab == 'wavelength':
+
         I_max = data[0]['I'].max()
         nm = data[0].loc[data[0]['I'] == float(I_max)]['nM']
-        x = np.arange(0,len(data),1)
+        if not concentrations:
+            concentrations = np.arange(0,len(data),1)
+
+        x = concentrations
         y = []
 
         for i in range(0,len(data)):
             I_at_nM = float(data[i].loc[data[i]['nM'] == float(nm)]['I'])
             y.append(I_at_nM)
-
         fig.add_trace(go.Scatter(x=x,y=y,name='testing',mode='markers'),row=1,col=1)
 
         #fig['layout']['xaxis']['title'] = y
+
+    if active_tab == 'intensity':
+
+        if not concentrations:
+            concentrations = np.arange(0,len(data),1)
+
+        x = concentrations
+        y = []
+        for i in range(0, len(data)):
+            I_max = data[i]['I'].max()
+            nm = data[i].loc[data[i]['I'] == float(I_max)]['nM']
+            y.append(float(nm))
+
+        fig.add_trace(go.Scatter(x=x,y=y,mode='markers'),row=1,col=1)
+
+
+
     return fig

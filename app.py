@@ -4,7 +4,6 @@ import dash_bootstrap_components as dbc
 from assets.navbar import create_navbar
 app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.LUX])
 
-
 nav = create_navbar()
 server = app.server
 

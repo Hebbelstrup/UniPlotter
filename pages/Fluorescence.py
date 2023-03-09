@@ -63,6 +63,8 @@ layout = html.Div(id='parent', children=[
                        ),
 
                        dcc.Graph(id='Fluorescence_plot'),
+                       html.Div(id='slider_container',
+                                children=[],style={'display':'none'}),
                        html.P(id='Fluorescence_placeholder'),
                        dbc.Modal(
                            [
@@ -134,24 +136,31 @@ def update_tab(event):
            ], None ,'mx-auto'
 
 @callback(Output('Fluorescence_plot','figure'),
+          Output('slider_container','children'),
+          Output('slider_container','style'), # visibility of wavelength slider
           [Input('upload-data', 'contents'),
            Input('fluoro_tabs','active_tab'),
            Input('concentrations_store','data'),
            State('upload-data', 'filename')], config_prevent_initial_callbacks=True)
 
 def plot_fluorescence(content,active_tab,concentrations,filename):
-
     data = [parse_content(i) for i in content]
     fig = make_subplots(rows=1, cols=1)
+    slider = None
+    style = {'display':'None'}
 
-    if active_tab == 'normal' and concentrations:
+    try:
+        if len(concentrations) == len(data) and None not in concentrations:
+            pass
+        else:
+            concentrations = [i for i in range(0, len(data))]
+    except:
+        concentrations = [i for i in range(0,len(data))]
+
+
+    if active_tab == 'normal':
         for i in range(0,len(data)):
             fig.add_trace(go.Scatter(x=data[i]['nM'],y=data[i]['I'],name=concentrations[i]),row=1,col=1)
-
-    if active_tab == 'normal' and not concentrations:
-        for i in range(0,len(data)):
-            fig.add_trace(go.Scatter(x=data[i]['nM'],y=data[i]['I'],name=filename[i]),row=1,col=1)
-
 
     ### WAVELENGTH PLOTTER. CURRENTLY TAKES THE NM WITH MAX INT FOR FILE 0 AND PLOTS FOR ALL
     ### STILL NEEDS ABILITY TO DECIDE WAVELENGTH & SHOULD TAKE IN LIST OF DENATURANT VALUES
@@ -160,33 +169,33 @@ def plot_fluorescence(content,active_tab,concentrations,filename):
 
         I_max = data[0]['I'].max()
         nm = data[0].loc[data[0]['I'] == float(I_max)]['nM']
-        if not concentrations:
-            concentrations = np.arange(0,len(data),1)
 
-        x = concentrations
         y = []
-
         for i in range(0,len(data)):
             I_at_nM = float(data[i].loc[data[i]['nM'] == float(nm)]['I'])
             y.append(I_at_nM)
-        fig.add_trace(go.Scatter(x=x,y=y,name='testing',mode='markers'),row=1,col=1)
+        fig.add_trace(go.Scatter(x=concentrations,y=y,name='testing',mode='markers'),row=1,col=1)
 
-        #fig['layout']['xaxis']['title'] = y
+        minum = data[0]['nM'].min()
+        maxim = data[0]['nM'].max()
+        slider = ['Use slider to change what wavelength to follow',
+                            dcc.Slider(id='wavelength_slider',
+                            min=minum,max=maxim,step=5,value=int(nm),
+                            marks={int(minum):f'{minum}',int(maxim):f'{int(maxim)}'},
+                            tooltip={'placement':'bottom','always_visible':True}),
+                            ]
+        style = {'display':'block','transform':'scale(1)'}
 
     if active_tab == 'intensity':
 
-        if not concentrations:
-            concentrations = np.arange(0,len(data),1)
-
-        x = concentrations
         y = []
         for i in range(0, len(data)):
             I_max = data[i]['I'].max()
             nm = data[i].loc[data[i]['I'] == float(I_max)]['nM']
             y.append(float(nm))
 
-        fig.add_trace(go.Scatter(x=x,y=y,mode='markers'),row=1,col=1)
+        fig.add_trace(go.Scatter(x=concentrations,y=y,mode='markers'),row=1,col=1)
 
 
 
-    return fig
+    return fig,slider,style

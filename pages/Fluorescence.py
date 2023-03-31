@@ -10,7 +10,7 @@ import numpy as np
 from dash.dependencies import ALL
 from dash.exceptions import PreventUpdate
 
-
+pd.options.mode.chained_assignment = None
 def parse_content(contents): # Takes in one element from "upload-Data","contents" and returns a dataframe for that file
 
 
@@ -64,7 +64,14 @@ layout = html.Div(id='parent', children=[
 
                        dcc.Graph(id='Fluorescence_plot'),
                        html.Div(id='slider_container',
-                                children=[],style={'display':'none'}),
+                                  children=[dcc.Slider(id='wavelength_slider',min=0,max=10,step=1,value=5,
+                                  marks={0: f'{0}', 10: f'{10}'},
+                                  tooltip={'placement': 'bottom', 'always_visible': True})],
+                            style={'display':'none'}),
+
+
+
+
                        html.P(id='Fluorescence_placeholder'),
                        dbc.Modal(
                            [
@@ -80,6 +87,8 @@ layout = html.Div(id='parent', children=[
                            is_open=False,
                        ),
                        dcc.Store(id='concentrations_store'),
+                       dcc.Store(id='nm_slider_store'),
+                       html.Div(id='tester')
 
 ])
 
@@ -88,7 +97,7 @@ layout = html.Div(id='parent', children=[
 
 def update_modal_with_files(content,filename): # Renders the layout for the modal.
 
-    names = [html.H4(i[:-4],id=f'{i}_name', style={'display':'inline-block','margin-left':30,'margin-right':30}) for i in filename]
+    names = [html.H4(i,id=f'{i}_name', style={'display':'inline-block','margin-left':30,'margin-right':30}) for i in filename]
     input = [dcc.Input(id={'type':'component','index':i}, type='number',placeholder='test',style={'display':'inline-block', 'border': '1px solid black'}) for i in filename]
     together = []
     for i in range(0,len(names)): # Has to be done this way to such that its just one large list. Lists of list !does not work!
@@ -136,18 +145,26 @@ def update_tab(event):
            ], None ,'mx-auto'
 
 @callback(Output('Fluorescence_plot','figure'),
-          Output('slider_container','children'),
-          Output('slider_container','style'), # visibility of wavelength slider
+          Output('nm_slider_store','data'),
+          Output('slider_container','style'),
           [Input('upload-data', 'contents'),
            Input('fluoro_tabs','active_tab'),
            Input('concentrations_store','data'),
-           State('upload-data', 'filename')], config_prevent_initial_callbacks=True)
+           Input('wavelength_slider','value')
+           ], config_prevent_initial_callbacks=True)
 
-def plot_fluorescence(content,active_tab,concentrations,filename):
+def plot_fluorescence(content,active_tab,concentrations,slider_value):
     data = [parse_content(i) for i in content]
     fig = make_subplots(rows=1, cols=1)
-    slider = None
-    style = {'display':'None'}
+
+    style = {'display':'none'}
+
+    I_max = data[0]['I'].max() # Messy, but need to define values for slider outside of choice of tab, because changing tab initiates the update of the slider values
+    slider_initial_nm = data[0].loc[data[0]['I'] == float(I_max)]['nM']
+    slider_min = data[0]['nM'].min()
+    slider_max = data[0]['nM'].max()
+
+    print(slider_value)
 
     try:
         if len(concentrations) == len(data) and None not in concentrations:
@@ -167,23 +184,18 @@ def plot_fluorescence(content,active_tab,concentrations,filename):
 
     if active_tab == 'wavelength':
 
-        I_max = data[0]['I'].max()
-        nm = data[0].loc[data[0]['I'] == float(I_max)]['nM']
-
+        #I_max = data[0]['I'].max()
+        #nm = data[0].loc[data[0]['I'] == float(I_max)]['nM']
+        nm = slider_value
         y = []
         for i in range(0,len(data)):
-            I_at_nM = float(data[i].loc[data[i]['nM'] == float(nm)]['I'])
+            I_at_nM = float(data[i].loc[data[i]['nM'] == nm]['I'])
             y.append(I_at_nM)
         fig.add_trace(go.Scatter(x=concentrations,y=y,name='testing',mode='markers'),row=1,col=1)
 
         minum = data[0]['nM'].min()
         maxim = data[0]['nM'].max()
-        slider = ['Use slider to change what wavelength to follow',
-                            dcc.Slider(id='wavelength_slider',
-                            min=minum,max=maxim,step=5,value=int(nm),
-                            marks={int(minum):f'{minum}',int(maxim):f'{int(maxim)}'},
-                            tooltip={'placement':'bottom','always_visible':True}),
-                            ]
+
         style = {'display':'block','transform':'scale(1)'}
 
     if active_tab == 'intensity':
@@ -191,11 +203,40 @@ def plot_fluorescence(content,active_tab,concentrations,filename):
         y = []
         for i in range(0, len(data)):
             I_max = data[i]['I'].max()
-            nm = data[i].loc[data[i]['I'] == float(I_max)]['nM']
-            y.append(float(nm))
+            nm_at_int = data[i].loc[data[i]['I'] == float(I_max)]['nM']
+            y.append(float(nm_at_int))
 
         fig.add_trace(go.Scatter(x=concentrations,y=y,mode='markers'),row=1,col=1)
 
 
 
-    return fig,slider,style
+    return fig,[slider_min,slider_max,slider_initial_nm],style
+
+@callback(Output('slider_container','children'),
+          Input('fluoro_tabs','active_tab'),
+          State('nm_slider_store','data'),
+          config_prevent_initial_callbacks=True)
+
+def updateslider(content,slider_data):
+    print('slider updates now')
+    print(slider_data)
+    if slider_data:
+        minimum = slider_data[0]
+        maximum = slider_data[1]
+        nm_at_int_max = slider_data[2][0]
+
+        slider = ['Use slider to change what wavelength to follow',
+        dcc.Slider(id='wavelength_slider',
+                    min=minimum, max=maximum, step=1, value=nm_at_int_max,
+                    marks={int(minimum): f'{minimum}', int(maximum): f'{int(maximum)}'},
+                    tooltip={'placement': 'bottom', 'always_visible': True}),
+         ]
+
+
+    else:
+        pass
+
+    return slider
+
+
+

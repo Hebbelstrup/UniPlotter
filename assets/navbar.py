@@ -12,6 +12,7 @@ def create_navbar():
                     dbc.DropdownMenuItem('CD', href='/cd'),
                     dbc.DropdownMenuItem('ÄKTA', href='/akta'),
                     dbc.DropdownMenuItem('Fluorescence', href='/fluorescence'),
+                    dbc.DropdownMenuItem('Bootstrapper',href='/bootstrapper'),
                     dbc.DropdownMenuItem('Files', href='/files'),
                 ],
             ),

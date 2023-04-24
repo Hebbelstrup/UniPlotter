@@ -1,16 +1,14 @@
 import base64
 import io
 import dash
-from dash import html, dcc, callback, Input, Output, dash_table,State,ctx
+from dash import html, dcc, callback, Input, Output,State
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import dash_bootstrap_components as dbc
-import numpy as np
 from dash.dependencies import ALL
-from dash.exceptions import PreventUpdate
 
-pd.options.mode.chained_assignment = None
+pd.options.mode.chained_assignment = None # Fixes slice error in pandas dataframe
 def parse_content(contents): # Takes in one element from "upload-Data","contents" and returns a dataframe for that file
 
 
@@ -32,7 +30,7 @@ dash.register_page(__name__, title='fluorescence')
 layout = html.Div(id='parent', children=[
             html.H1(id='H1', children='Fluorescence Plotter', style={'textAlign': 'center', 'marginTop': 40, 'marginBottom': 40}),
             html.Div(children=
-                ['A plotter for Fluorescence data from ...',html.Br(), 'Uploading more than one file will only overlay 280 nm']
+                ['A plotter for fluorescence data from Jasco spectrofluorometers',html.Br(), 'Uploading more than one file will overlay them']
                               ,style={'textAlign':'center','marginBottom':20}),
             dcc.Upload(id='upload-data', children=html.Div([html.A("Select File(s)")]),
                        style={
@@ -53,9 +51,6 @@ layout = html.Div(id='parent', children=[
                                    style={
                                        'display' : 'none'
                                    }),
-
-
-
                        dbc.Tabs([]
                            ,id="fluoro_tabs",
                            active_tab='normal',
@@ -68,9 +63,6 @@ layout = html.Div(id='parent', children=[
                                   marks={0: f'{0}', 10: f'{10}'},
                                   tooltip={'placement': 'bottom', 'always_visible': True})],
                             style={'display':'none'}),
-
-
-
 
                        html.P(id='Fluorescence_placeholder'),
                        dbc.Modal(
@@ -184,17 +176,12 @@ def plot_fluorescence(content,active_tab,concentrations,slider_value):
 
     if active_tab == 'wavelength':
 
-        #I_max = data[0]['I'].max()
-        #nm = data[0].loc[data[0]['I'] == float(I_max)]['nM']
         nm = slider_value
         y = []
         for i in range(0,len(data)):
             I_at_nM = float(data[i].loc[data[i]['nM'] == nm]['I'])
             y.append(I_at_nM)
         fig.add_trace(go.Scatter(x=concentrations,y=y,name='testing',mode='markers'),row=1,col=1)
-
-        minum = data[0]['nM'].min()
-        maxim = data[0]['nM'].max()
 
         style = {'display':'block','transform':'scale(1)'}
 
@@ -218,8 +205,7 @@ def plot_fluorescence(content,active_tab,concentrations,slider_value):
           config_prevent_initial_callbacks=True)
 
 def updateslider(content,slider_data):
-    print('slider updates now')
-    print(slider_data)
+
     if slider_data:
         minimum = slider_data[0]
         maximum = slider_data[1]

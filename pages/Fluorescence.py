@@ -156,7 +156,7 @@ def plot_fluorescence(content,active_tab,concentrations,slider_value):
     slider_min = data[0]['nM'].min()
     slider_max = data[0]['nM'].max()
 
-    print(slider_value)
+
 
     try:
         if len(concentrations) == len(data) and None not in concentrations:

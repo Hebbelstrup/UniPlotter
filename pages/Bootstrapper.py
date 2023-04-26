@@ -3,7 +3,6 @@ import numpy as np
 import dash_bootstrap_components as dbc
 from dash import html, dcc, callback, Input, Output, State
 from dash.dependencies import ALL
-import scipy as sc
 
 dash.register_page(__name__, title='bootstrapper')
 

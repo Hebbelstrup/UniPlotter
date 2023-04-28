@@ -9,6 +9,10 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import ALL
 
 pd.options.mode.chained_assignment = None # Fixes slice error in pandas dataframe
+
+config = {'toImageButtonOptions': {
+    'format':'svg'
+}}
 def parse_content(contents): # Takes in one element from "upload-Data","contents" and returns a dataframe for that file
 
 
@@ -57,7 +61,7 @@ layout = html.Div(id='parent', children=[
                            style={'display':'none'},
                        ),
 
-                       dcc.Graph(id='Fluorescence_plot'),
+                       dcc.Graph(id='Fluorescence_plot',config=config),
                        html.Div(id='slider_container',
                                   children=[dcc.Slider(id='wavelength_slider',min=0,max=10,step=1,value=5,
                                   marks={0: f'{0}', 10: f'{10}'},

@@ -9,7 +9,9 @@ from plotly.subplots import make_subplots
 
 dash.register_page(__name__, title='akta')
 
-
+config = {'toImageButtonOptions': {
+    'format':'svg'
+}}
 
 def get_xy(name,df):
     x_loc = df.columns.get_loc(name) -1
@@ -49,7 +51,7 @@ layout = html.Div(id='parent', children=[
                        },
                        multiple=True,
                        className="d-grid gap-2 col-6 mx-auto"),
-            dcc.Graph(id='akta_plot'),
+            dcc.Graph(id='akta_plot',config=config),
             html.H1(id='output-data-upload'),
             html.P(id='placeholder'),
 

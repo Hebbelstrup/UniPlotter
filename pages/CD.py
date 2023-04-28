@@ -13,6 +13,9 @@ from plotly.subplots import make_subplots
 
 dash.register_page(__name__, title='CD')
 
+config = {'toImageButtonOptions': {
+    'format':'svg'
+}}
 
 def parse_contents(contents, filename):
     content_type, content_string = contents.split(',')
@@ -58,7 +61,7 @@ layout = html.Div(id='parent', children=[
                   style={'display': 'inline-block'}),
     dcc.Checklist(id="checklist", inline=True),
 
-    dcc.Graph(id='line_plot'),
+    dcc.Graph(id='line_plot',config=config),
 
     dcc.Input(id='An', style={'display': 'none'}, type='number', placeholder='Initial An'),
     dcc.Input(id='Bn', style={'display': 'none'}, type='number', placeholder='Initial Bn'),

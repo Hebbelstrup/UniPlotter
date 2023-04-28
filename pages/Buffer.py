@@ -9,7 +9,7 @@ from sklearn.metrics import r2_score
 from dash import dcc,callback
 from dash import html
 from dash.dependencies import Input, Output, State
-from github import Github
+
 
 
 

@@ -27,7 +27,7 @@ dash.register_page(__name__, title='Mass Spectrometry')
 layout = html.Div(id='MS_parent', children=[
             html.H1(id='MS_description', children='Mass spec Plotter', style={'textAlign': 'center', 'marginTop': 40, 'marginBottom': 40}),
             html.Div(children=
-                ['A plotter for fluorescence data from Jasco spectrofluorometers',html.Br(), 'Uploading more than one file will overlay them']
+                ['A plotter for Mass Spec data from the agilent system',html.Br(), 'Uploading more than one file will overlay them']
                               ,style={'textAlign':'center','marginBottom':20}),
             dcc.Upload(id='upload-data', children=html.Div([html.A("Select File(s)")]),
                        style={

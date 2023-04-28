@@ -62,7 +62,7 @@ def ms_plotting(content,filename):
 
         fig.add_trace(go.Scatter(x=x,y=y,name=k))
 
-    fig['layout']['xaxis']['title'] = 'm/s'
+    fig['layout']['xaxis']['title'] = 'm/z'
     fig['layout']['yaxis']['title'] = '%'
     return fig
 

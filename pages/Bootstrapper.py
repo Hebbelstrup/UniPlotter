@@ -16,7 +16,7 @@ layout = html.Div(id='bootstrapper_intro', children=[
                          style={'width':200,'margin':'auto'},
 
                          ),
-            html.Div(id='bootstrapper_input', children='',className="d-grid col-4 mx-auto"
+            html.Div(id='bootstrapper_input', children='',className="d-grid col-2 mx-auto"
                      ,style={'textAlign':'center','marginTop':10,'marginBottom':10}),
             dbc.Button('Fit the values',id='bootstrap_button',className='d-grid col-4 mx-auto',style={'textAlign':'center','marginTop':10,'marginBottom':10},n_clicks=0),
             html.H1(id='bootstrap_result',children=[],className='d-grid col-4 mx-auto',style={'textAlign':'center'}),

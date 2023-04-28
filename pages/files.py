@@ -50,6 +50,14 @@ layout = html.Div(children=[
              color="dark",
              outline=True,
          ),
+         dbc.Button(
+             "Mass Spectrometry",
+             href="assets/Data/ms_example.txt",
+             download="ms_example",
+             external_link=True,
+             color="dark",
+             outline=True,
+         ),
 
     ],
     className="d-grid gap-2 col-6 mx-auto")]

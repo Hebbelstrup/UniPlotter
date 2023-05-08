@@ -5,7 +5,7 @@ from dash import html, dcc, callback, Input, Output, dash_table,State
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
+import plotly.express as px
 
 dash.register_page(__name__, title='akta')
 
@@ -73,16 +73,17 @@ layout = html.Div(id='parent', children=[
 def plot_data(contents,filename):
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
+    colors = px.colors.qualitative.Plotly
 
     if len(contents) == 1:
         for data in contents:
             df = parse_content(data)
-        for i in df.columns[1::2]: # everyother coumn is the "event". The column before is the mL of that event.
+        for k,i in enumerate(df.columns[1::2]): # every other column is the "event". The column before is the mL of that event.
             x,y,name = get_xy(i,df) # this returns the ml and the event in a data frame.
             if name =='mAU':
-                fig.add_trace(go.Scatter(x=x,y=y,name=name),secondary_y=False)
+                fig.add_trace(go.Scatter(x=x,y=y,name=name,line=dict(color=colors[k])),secondary_y=False)
             if name not in ['Fraction','Logbook','Injection','mAU']:
-                fig.add_trace(go.Scatter(x=x, y=y, name=name,visible='legendonly'), secondary_y=True)
+                fig.add_trace(go.Scatter(x=x, y=y, name=name,visible='legendonly',line=dict(color=colors[k])), secondary_y=True)
             if name == 'Fraction':
                 fig.add_trace(go.Scatter(x=[0, 0], y=[0, 0], mode='lines',
                                          legendgroup='Fractions', name='fractions',visible='legendonly'))

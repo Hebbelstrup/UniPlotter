@@ -13,9 +13,12 @@ from dash.dependencies import Input, Output, State
 
 
 
+
 dash.register_page(__name__, title='Buffer')
 
-layout = html.Div('Work in progress')
+layout = html.Div(children=[html.H1('Work in progress'),
+
+]),
 
 
 

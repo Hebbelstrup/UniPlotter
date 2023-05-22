@@ -29,9 +29,18 @@ def parse_content(contents):
 
     decoded = base64.b64decode(content_string)
     file = io.StringIO(decoded.decode('utf-8'))
-
-    df = pd.read_csv(file, sep="\n|\\t", decimal=".", header=2, engine='python')
+    df = pd.read_csv(file, delimiter="\n|\\t", decimal=".", header=2, engine='python')
     df = pd.DataFrame(df)
+
+    if len(np.where(df['mAU'].isnull())[0]) != 0:
+
+        mAU_NaN = np.where(df['mAU'].isnull())[0]
+
+        shift = df.columns.get_loc('mAU') - 1
+
+
+        df[mAU_NaN.min():] = df[mAU_NaN.min():].shift(shift,axis=1)
+
 
     return df
 
@@ -81,10 +90,15 @@ def plot_data(contents,filename):
     if len(contents) == 1:
         for data in contents:
             df = parse_content(data)
+           # df2 = df[96:]
+           # df = df[0:96]
+
         for k,i in enumerate(df.columns[1::2]): # every other column is the "event". The column before is the mL of that event.
             x,y,name = get_xy(i,df) # this returns the ml and the event in a data frame.
             if name =='mAU':
                 fig.add_trace(go.Scatter(x=x,y=y,name=name,line=dict(color=colors[k])),secondary_y=False)
+            #    fig.add_trace(go.Scatter(x=df2['ml'][96:], y=df2['Fraction'][96:], name=name, line=dict(color=colors[k]),showlegend=False), secondary_y=False)
+
             if name not in ['Fraction','Logbook','Injection','mAU']:
                 fig.add_trace(go.Scatter(x=x, y=y, name=name,visible='legendonly',line=dict(color=colors[k])), secondary_y=True)
             if name == 'Logbook' :
@@ -94,7 +108,7 @@ def plot_data(contents,filename):
                 fig.add_trace(go.Scatter(x=[0, 0], y=[0, 0], mode='lines',
                                          legendgroup='Fractions', name='fractions',visible='legendonly'))
                 for k,i in enumerate(x.dropna()):
-                    
+
                     fig.add_trace(go.Scatter(x=[i,i],y=[df['mAU'].astype(float).min(),df['mAU'].astype(float).max()/15],
                                              mode='lines',
                                              legendgroup='Fractions',name='fractions',showlegend=False,

@@ -1,11 +1,6 @@
 import dash
 from dash import html
 
-
-
-
-
-
 dash.register_page(__name__, title='Calenders')
 
 layout = html.Div(children=[html.H1('Overview of calenders for SBiNLab',style={'textAlign': 'center', 'marginTop': 40, 'marginBottom': 20}),

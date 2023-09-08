@@ -15,7 +15,7 @@ def create_navbar():
                     dbc.DropdownMenuItem('Mass Spectrometry', href='/massspec'),
                     dbc.DropdownMenuItem('Bootstrapper',href='/bootstrapper'),
                     dbc.DropdownMenuItem('Buffer calculator', href='/buffer'),
-      #              dbc.DropdownMenuItem('Calenders',href='calenders'),
+                    dbc.DropdownMenuItem('Calenders',href='calenders'),
                     dbc.DropdownMenuItem('Files', href='/files'),
                 ],
             ),

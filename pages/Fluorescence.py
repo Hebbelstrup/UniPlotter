@@ -6,6 +6,9 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import dash_bootstrap_components as dbc
+from scipy import optimize
+import numpy as np
+from sklearn.metrics import r2_score
 from dash.dependencies import ALL
 
 pd.options.mode.chained_assignment = None # Fixes slice error in pandas dataframe
@@ -29,6 +32,10 @@ def parse_content(contents): # Takes in one element from "upload-Data","contents
 
     return data
 
+
+def fit_unfolding(x, Fn,An,Fd,Ad,m,U):
+    return (Fn + An * x) + ((Fd + Ad * x) * np.exp((m * (x - U)) / (0.59))) / (1 + np.exp((m * (x - U)) / 0.59))
+
 dash.register_page(__name__, title='fluorescence')
 
 layout = html.Div(id='parent', children=[
@@ -50,11 +57,15 @@ layout = html.Div(id='parent', children=[
                        multiple=True,
                        className="d-grid gap-2 col-6 mx-auto"),
 
-
                        html.Button('concentration',id='fluoro_concentrations',n_clicks=0,
                                    style={
                                        'display' : 'none'
                                    }),
+                       html.Button('Fitting', id='fitting_button', n_clicks=0,
+                                   style={
+                                       'display': 'none'
+                                   }),
+
                        dbc.Tabs([]
                            ,id="fluoro_tabs",
                            active_tab='normal',
@@ -82,25 +93,62 @@ layout = html.Div(id='parent', children=[
                            id="modal",
                            is_open=False,
                        ),
-                       dcc.Store(id='concentrations_store'),
-                       dcc.Store(id='nm_slider_store'),
-                       html.Div(id='tester')
 
+                       dcc.Store(id='concentrations_store'),
+                       dcc.Store(id='fit_parameters_store'),
+                       dcc.Store(id='nm_slider_store'),
+                       html.Div(id='tester'),
+
+                       dbc.Modal(
+                            [
+                               dbc.ModalHeader(dbc.ModalTitle("Fitting"),className="mx-auto"),
+                               dbc.ModalBody(children=[
+                                    html.Div([
+                                    html.H5('Fn: ', style={'display':'inline-block','margin-left':30,'margin-right':30,'width':'100px'}),
+                                    dcc.Input(id='Fn_guess', type='number',placeholder='initial guess',style={'display':'inline-block', 'border': '1px solid black'}),
+                                    html.Br(),
+                                    html.H5('An: ',style={'display': 'inline-block', 'margin-left': 30, 'margin-right': 30,'width':'100px'}),
+                                    dcc.Input(id='An_guess', type='number', placeholder='initial guess',style={'display': 'inline-block', 'border': '1px solid black'}),
+                                    html.Br(),
+                                    html.H5('Fd: ',style={'display': 'inline-block', 'margin-left': 30, 'margin-right': 30,'width':'100px'}),
+                                    dcc.Input(id='Fd_guess', type='number', placeholder='initial guess',style={'display': 'inline-block', 'border': '1px solid black'}),
+                                    html.Br(),
+                                    html.H5('Ad: ',style={'display': 'inline-block', 'margin-left': 30, 'margin-right': 30,'width':'100px'}),
+                                    dcc.Input(id='Ad_guess', type='number', placeholder='initial guess',style={'display': 'inline-block', 'border': '1px solid black'}),
+                                    html.Br(),
+                                    html.H5('m: ',style={'display': 'inline-block', 'margin-left': 30, 'margin-right': 30,'width':'100px'}),
+                                    dcc.Input(id='m_guess', type='number', placeholder='initial guess',style={'display': 'inline-block', 'border': '1px solid black'}),
+                                    html.Br(),
+                                    html.H5('U: ',style={'display': 'inline-block', 'margin-left': 30, 'margin-right': 30,'width':'100px'}),
+                                    dcc.Input(id='U_guess', type='number', placeholder='initial guess',style={'display': 'inline-block', 'border': '1px solid black'}),
+                               ],style={'display':'inline-block'})]),
+
+                               dbc.ModalFooter(
+                                   dbc.Button(
+                                       "Close & save", id="fit_close", className="mx-auto", n_clicks=0
+                                   )
+                               ),
+                           ],
+                           id='fit_modal',
+                           is_open=False,
+                       )
 ])
 
-@callback(Output('modalbody','children'), # Only updates when new files are upoaded. Not when button is clicked. Very usefull for the storage of Inputs
+@callback(Output('modalbody','children'), # Only updates when new files are upoaded. Not when button is clicked. Very usefull for the storage of Inputs #//TODO fix modal name
           [Input('upload-data', 'contents'),Input('upload-data', 'filename')],config_prevent_initial_callbacks=True)
 
 def update_modal_with_files(content,filename): # Renders the layout for the modal.
 
-    names = [html.H4(i,id=f'{i}_name', style={'display':'inline-block','margin-left':30,'margin-right':30}) for i in filename]
-    input = [dcc.Input(id={'type':'component','index':i}, type='number',placeholder='test',style={'display':'inline-block', 'border': '1px solid black'}) for i in filename]
+    names = [html.H4(i,id=f'{i}_name', style={'display':'inline-block','margin-left':30,'margin-right':30,'width':'100px'}) for i in filename]
+    input = [dcc.Input(id={'type':'component','index':i}, type='number',placeholder='concentration',style={'display':'inline-block', 'border': '1px solid black'}) for i in filename]
     together = []
     for i in range(0,len(names)): # Has to be done this way to such that its just one large list. Lists of list !does not work!
             together.append(names[i])
             together.append(input[i])
-
     return html.Div(together)
+
+
+
 
 @callback(Output('modal','is_open'),Output("close",'n_clicks'),Output('concentrations_store','data'),
           [Input('fluoro_concentrations','n_clicks'),Input("close",'n_clicks'),State({'type':'component','index':ALL},'value')],config_prevent_initial_callbacks=True)
@@ -110,20 +158,45 @@ def update_modal_with_files(content,filename): # Renders the layout for the moda
 
 def create_concentrations(open_clicks,close_clicks,concentrations):
     if open_clicks >= 1 and close_clicks == 0:
+
         return True,0,concentrations
+
 
     else: # Can only happen when close_clicks >= 1. gets set to zero in both open and close.
         return False,0,concentrations
 
+@callback(Output('fit_modal','is_open'),Output('fit_close','n_clicks'),Output('fit_parameters_store','data'),
+          [Input('fitting_button','n_clicks'),Input('fit_close','n_clicks'),
+           Input('Fn_guess','value'), Input('An_guess','value'),Input('Fd_guess','value'),Input('Ad_guess','value'),
+           Input('m_guess','value'),Input('U_guess','value')],
+          config_prevent_initial_callbacks=True)
+
+def open_fitting(open_clicks,close_clicks,Fn,An,Fd,Ad,m,U):
+    if open_clicks >= 1 and close_clicks == 0:
+
+        return True, 0, [Fn,An,Fd,Ad,m,U]
+
+
+
+    else: # Can only happen when close_clicks >= 1. gets set to zero in both open and close.
+        return False,0,[Fn,An,Fd,Ad,m,U]
+
+
+
+
+
 @callback(Output('fluoro_concentrations','style'), # Input is whenever files are uploaded. Output is style and className for the button
           Output('fluoro_concentrations','className'),
+          Output('fitting_button','style'),
+          Output('fitting_button','className'),
             Input('upload-data', 'contents'),config_prevent_initial_callbacks=True)
 
 def update_button(data): # Returns style and position for button if more than 1 file is uploaded. Button is used for concentration input.
         if len(data) > 1:
             style = {'width': '154px', 'height': '30px', 'marginTop': 5}
             position = "d-grid gap-2 col-6 mx-auto"
-            return style,position
+
+            return style,position,style,position
 
         else:
             return {'display':'none'},None
@@ -146,10 +219,12 @@ def update_tab(event):
           [Input('upload-data', 'contents'),
            Input('fluoro_tabs','active_tab'),
            Input('concentrations_store','data'),
-           Input('wavelength_slider','value')
+           Input('wavelength_slider','value'),
+           Input('fit_close','n_clicks'),
+           Input('fit_parameters_store','data')
            ], config_prevent_initial_callbacks=True)
 
-def plot_fluorescence(content,active_tab,concentrations,slider_value):
+def plot_fluorescence(content,active_tab,concentrations,slider_value,fit_close_clicks,fit_parameters):
     data = [parse_content(i) for i in content]
     fig = make_subplots(rows=1, cols=1)
 
@@ -185,9 +260,48 @@ def plot_fluorescence(content,active_tab,concentrations,slider_value):
         for i in range(0,len(data)):
             I_at_nM = float(data[i].loc[data[i]['nM'] == nm]['I'])
             y.append(I_at_nM)
-        fig.add_trace(go.Scatter(x=concentrations,y=y,name='testing',mode='markers'),row=1,col=1)
+        fig.add_trace(go.Scatter(x=concentrations,y=y,name='Data',mode='markers'),row=1,col=1)
+        print(nm)
+        fig['layout']['xaxis']['title'] = 'C'
+        fig['layout']['yaxis']['title'] = f'I{nm} nm'
+
+
+
 
         style = {'display':'block','transform':'scale(1)'}
+
+        sorted_data = list(zip(concentrations,y))
+        sorted_data = sorted(sorted_data, key=lambda tup: tup[0])
+        sorted_x, sorted_y = zip(*sorted_data)
+
+        if fit_parameters and None not in fit_parameters:
+
+
+            try:
+
+                par,pcov = optimize.curve_fit(fit_unfolding,sorted_x,sorted_y,p0=fit_parameters)
+                perr = np.sqrt(np.diag(pcov))
+                y_pred = fit_unfolding(np.array(sorted_x),*par)
+
+                r2 = r2_score(sorted_y,y_pred)
+
+                fig.add_trace(
+                    go.Scatter(x=np.array(sorted_x), y=y_pred, mode='lines',
+                               line={'width': 1, 'dash': 'dash'},
+                               name=f'Fn = {par[0]:.3} +- {perr[0]:.3}\
+                                    <br>An = {par[1]:.3} +- {perr[1]:.3}\
+                                    <br>Fd = {par[2]:.3} +- {perr[2]:.3}\
+                                    <br>Ad = {par[3]:.3} +- {perr[3]:.3}\
+                                    <br>m = {par[4]:.3} +- {perr[4]:.3}\
+                                    <br>U = {par[5]:.3} +- {perr[5]:.3}\
+                                    <br>r2 = {r2:.3}')
+
+
+
+                    )
+
+            except Exception as e:
+                print(e)
 
     if active_tab == 'intensity':
 
@@ -197,7 +311,42 @@ def plot_fluorescence(content,active_tab,concentrations,slider_value):
             nm_at_int = data[i].loc[data[i]['I'] == float(I_max)]['nM']
             y.append(float(nm_at_int))
 
-        fig.add_trace(go.Scatter(x=concentrations,y=y,mode='markers'),row=1,col=1)
+        fig.add_trace(go.Scatter(x=concentrations,y=y,mode='markers',name='data'),row=1,col=1)
+
+        fig['layout']['xaxis']['title'] = 'C'
+        fig['layout']['yaxis']['title'] = 'λmax'
+
+        ### START OF FITTING
+        sorted_data = list(zip(concentrations,y))
+        sorted_data = sorted(sorted_data, key=lambda tup: tup[0])
+        sorted_x, sorted_y = zip(*sorted_data)
+
+        if fit_parameters and None not in fit_parameters:
+
+            try:
+
+                par,pcov = optimize.curve_fit(fit_unfolding,sorted_x,sorted_y,p0=fit_parameters)
+                perr = np.sqrt(np.diag(pcov))
+                y_pred = fit_unfolding(np.array(sorted_x),*par)
+
+                r2 = r2_score(sorted_y,y_pred)
+
+                fig.add_trace(
+                    go.Scatter(x=np.array(sorted_x), y=y_pred, mode='lines',
+                               line={'width': 1, 'dash': 'dash'},
+                               name=f'Fn = {par[0]:.3} +- {perr[0]:.3}\
+                                    <br>An = {par[1]:.3} +- {perr[1]:.3}\
+                                    <br>Fd = {par[2]:.3} +- {perr[2]:.3}\
+                                    <br>Ad = {par[3]:.3} +- {perr[3]:.3}\
+                                    <br>m = {par[4]:.3} +- {perr[4]:.3}\
+                                    <br>U = {par[5]:.3} +- {perr[5]:.3}\
+                                    <br>r2 = {r2:.3}')
+                )
+                print(perr)
+
+
+            except Exception as e:
+                print(e)
 
 
 
@@ -227,6 +376,15 @@ def updateslider(content,slider_data):
         pass
 
     return slider
+
+@callback(Output('Fluorescence_placeholder','children'),
+          Input('Fluorescence_plot','figure'),
+          config_prevent_initial_callbacks=True
+          )
+
+def testing(data):
+    pass
+
 
 
 
